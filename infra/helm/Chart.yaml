@@ -1,0 +1,14 @@
+apiVersion: v2
+name: pitchcraft-ai
+description: Enterprise Helm Chart for PitchCraft AI Sales Pitch Customizer
+type: application
+version: 1.1.0
+appVersion: "1.1.0"
+keywords:
+  - b2b-marketing
+  - sales-automation
+  - cold-outreach
+  - artificial-intelligence
+maintainers:
+  - name: PitchCraft Team
+    email: devops@pitchcraft.io

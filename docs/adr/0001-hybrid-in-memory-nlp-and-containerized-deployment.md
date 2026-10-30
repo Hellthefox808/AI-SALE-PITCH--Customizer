@@ -46,3 +46,4 @@ Should enterprise customers require hosted cloud LLM endpoints (e.g. OpenAI or G
 ## 9. Future Impact & Roadmap
 - **v1.1**: Add LiteFS replication support for distributed multi-region edge deployments.
 - **v1.2**: Add OpenTelemetry OTLP trace export support alongside existing Prometheus metrics.
+

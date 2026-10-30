@@ -39,3 +39,4 @@ services:
 volumes:
   pitchcraft-storage:
     driver: local
+

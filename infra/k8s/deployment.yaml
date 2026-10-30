@@ -78,3 +78,4 @@ spec:
       volumes:
         - name: pitchcraft-storage
           emptyDir: {}
+
