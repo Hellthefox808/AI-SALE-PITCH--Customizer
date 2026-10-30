@@ -3,6 +3,8 @@ import { PitchEngine } from '../service/pitchEngine.js'
 import { CadenceEngine } from '../service/cadenceEngine.js'
 import { NlpEngine } from '../service/nlpEngine.js'
 import { QualityEngine } from '../service/qualityEngine.js'
+import { metricsService } from '../service/metricsService.js'
+import { createRateLimiter } from './rateLimiter.js'
 import { ROLES, FRAMEWORKS, TONES } from '../config/constants.js'
 
 export function createRouter (repository, authService) {
@@ -10,14 +12,37 @@ export function createRouter (repository, authService) {
   const requireAuth = authService.authMiddleware()
   const requireRole = (roles) => authService.roleMiddleware(roles)
 
-  // --- 1. Healthcheck & Metadata ---
+  const authLimiter = createRateLimiter({ windowMs: 60000, max: 30 })
+  const synthesisLimiter = createRateLimiter({ windowMs: 60000, max: 60 })
+
+  // --- 1. Healthchecks, Metrics & Probes ---
   router.get('/health', (req, res) => {
     res.json({
       status: 'healthy',
       service: 'AI Sales Pitch Customizer API',
       version: '1.0.0',
+      uptimeSeconds: Math.floor(process.uptime()),
+      dbStatus: 'connected',
       timestamp: new Date().toISOString()
     })
+  })
+
+  router.get('/health/live', (req, res) => {
+    res.json({ status: 'alive' })
+  })
+
+  router.get('/health/ready', (req, res) => {
+    try {
+      repository.db.prepare('SELECT 1 as ok').get()
+      res.json({ status: 'ready', database: 'connected' })
+    } catch (err) {
+      res.status(503).json({ status: 'unavailable', error: err.message })
+    }
+  })
+
+  router.get('/metrics', (req, res) => {
+    res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+    res.send(metricsService.getPrometheusMetrics())
   })
 
   router.get('/config/metadata', (req, res) => {
@@ -29,7 +54,7 @@ export function createRouter (repository, authService) {
   })
 
   // --- 2. Auth & Persona Switcher ---
-  router.post('/auth/login', async (req, res) => {
+  router.post('/auth/login', authLimiter, async (req, res) => {
     try {
       const { email, password } = req.body
       if (!email || !password) {
@@ -172,7 +197,7 @@ export function createRouter (repository, authService) {
   })
 
   // --- 6. Pitch Generation Studio ---
-  router.post('/pitches/generate', requireAuth, (req, res) => {
+  router.post('/pitches/generate', requireAuth, synthesisLimiter, (req, res) => {
     try {
       const { accountId, contactId, newsTriggerId, productId, framework, tone } = req.body
 
@@ -195,6 +220,8 @@ export function createRouter (repository, authService) {
         framework: framework || 'PAS',
         tone: tone || 'direct_roi'
       })
+
+      metricsService.recordPitchGeneration()
 
       repository.createAuditLog({
         userId: req.user.id,
@@ -222,7 +249,7 @@ export function createRouter (repository, authService) {
   })
 
   // --- Cadence & Multi-Touch Sequence Generation ---
-  router.post('/pitches/cadence', requireAuth, (req, res) => {
+  router.post('/pitches/cadence', requireAuth, synthesisLimiter, (req, res) => {
     try {
       const { accountId, contactId, newsTriggerId, productId, primaryVariant } = req.body
 
@@ -242,6 +269,8 @@ export function createRouter (repository, authService) {
         product,
         primaryVariant
       })
+
+      metricsService.recordCadenceGeneration()
 
       repository.createAuditLog({
         userId: req.user.id,
@@ -268,6 +297,8 @@ export function createRouter (repository, authService) {
     const newSpam = QualityEngine.analyzeSpamScore(result.sanitizedText, subjectLine || '')
     const newReadability = QualityEngine.calculateReadabilityGrade(result.sanitizedText)
 
+    metricsService.recordSanitization()
+
     res.json({
       ...result,
       newSpamScore: newSpam.score,
@@ -279,6 +310,8 @@ export function createRouter (repository, authService) {
   // --- Export Outreach Artifacts ---
   router.post('/pitches/export', requireAuth, (req, res) => {
     const { format, subjectLine, bodyContent, cadence, accountName, contactEmail } = req.body
+
+    metricsService.recordExport()
 
     if (format === 'csv') {
       const headers = 'Step,Channel,Day,Subject,Body\n'

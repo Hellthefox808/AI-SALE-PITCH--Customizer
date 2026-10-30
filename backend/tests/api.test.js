@@ -232,4 +232,30 @@ describe('REST API End-to-End Integration Suite', () => {
     const csv = await res.text()
     assert.ok(csv.startsWith('Step,Channel,Day,Subject,Body'))
   })
+
+  it('GET /api/health/live returns liveness probe', async () => {
+    const res = await fetch(`${baseUrl}/health/live`)
+    assert.equal(res.status, 200)
+    const data = await res.json()
+    assert.equal(data.status, 'alive')
+    assert.ok(res.headers.get('x-request-id'))
+  })
+
+  it('GET /api/health/ready returns readiness probe with database verification', async () => {
+    const res = await fetch(`${baseUrl}/health/ready`)
+    assert.equal(res.status, 200)
+    const data = await res.json()
+    assert.equal(data.status, 'ready')
+    assert.equal(data.database, 'connected')
+  })
+
+  it('GET /api/metrics returns Prometheus metrics in standard exposition format', async () => {
+    const res = await fetch(`${baseUrl}/metrics`)
+    assert.equal(res.status, 200)
+    assert.ok(res.headers.get('content-type').includes('text/plain'))
+    const metricsText = await res.text()
+    assert.ok(metricsText.includes('pitchcraft_http_requests_total'))
+    assert.ok(metricsText.includes('process_uptime_seconds'))
+    assert.ok(metricsText.includes('nodejs_memory_heap_used_bytes'))
+  })
 })
