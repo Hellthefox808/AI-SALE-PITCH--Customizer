@@ -352,6 +352,12 @@ export class Repository {
       FROM pitches
     `).get()
 
+    const frameworkCounts = this.db.prepare(`
+      SELECT framework, COUNT(id) as count, AVG(feedback_rating) as avg_rating
+      FROM pitches
+      GROUP BY framework
+    `).all()
+
     // Calculated time saved: approx 45 mins saved per manual research & draft
     const repHoursSaved = (totalPitches * 0.75).toFixed(1)
 
@@ -363,6 +369,13 @@ export class Repository {
       }, {}),
       categoryBreakdown: categoryCounts.reduce((acc, curr) => {
         acc[curr.trigger_category] = curr.count
+        return acc
+      }, {}),
+      frameworkBreakdown: frameworkCounts.reduce((acc, curr) => {
+        acc[curr.framework] = {
+          count: curr.count,
+          avgRating: Number((curr.avg_rating || 0).toFixed(1))
+        }
         return acc
       }, {}),
       avgSpamScore: Number((avgMetrics.avg_spam_score || 0).toFixed(1)),

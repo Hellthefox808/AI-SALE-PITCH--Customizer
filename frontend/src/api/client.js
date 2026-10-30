@@ -46,7 +46,11 @@ export const api = {
       throw new Error(errMsg)
     }
 
-    return response.json()
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      return response.json()
+    }
+    return response.text()
   },
 
   // Auth & Personas
@@ -113,6 +117,27 @@ export const api = {
   // Pitch Studio
   async generatePitch (payload) {
     return this.request('/pitches/generate', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+  },
+
+  async generateCadence (payload) {
+    return this.request('/pitches/cadence', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+  },
+
+  async sanitizePitch (text, subjectLine = '') {
+    return this.request('/pitches/sanitize', {
+      method: 'POST',
+      body: JSON.stringify({ text, subjectLine })
+    })
+  },
+
+  async exportPitch (payload) {
+    return this.request('/pitches/export', {
       method: 'POST',
       body: JSON.stringify(payload)
     })

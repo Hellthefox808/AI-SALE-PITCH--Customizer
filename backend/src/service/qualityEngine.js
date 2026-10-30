@@ -135,4 +135,94 @@ export class QualityEngine {
     const ratio = Math.min(100, Math.round((personalizedCount / sentences.length) * 100))
     return Math.max(70, ratio) // Ensure bounded realistic score for personalized output
   }
+
+  /**
+   * Automatically replaces high-risk spam words and aggressive punctuation
+   * with high-deliverability consultative alternatives.
+   */
+  static sanitizeText (text) {
+    if (!text) return { sanitizedText: '', changesCount: 0, replacements: [] }
+
+    const replacementMap = [
+      { regex: /\b100%\s+free\b/gi, replacement: 'complimentary' },
+      { regex: /\bguarantee(?:d)?\b/gi, replacement: 'consistently deliver' },
+      { regex: /\brisk-free\b/gi, replacement: 'verified' },
+      { regex: /\bact now\b/gi, replacement: 'when timing aligns' },
+      { regex: /\bexclusive deal\b/gi, replacement: 'tailored partnership' },
+      { regex: /\bdouble your\b/gi, replacement: 'substantially accelerate' },
+      { regex: /\bclick here\b/gi, replacement: 'access the resource below' },
+      { regex: /\bwinner\b/gi, replacement: 'industry benchmark' }
+    ]
+
+    let sanitized = text
+    const replacements = []
+
+    replacementMap.forEach(({ regex, replacement }) => {
+      if (regex.test(sanitized)) {
+        sanitized = sanitized.replace(regex, (matched) => {
+          replacements.push({ original: matched, replacement })
+          return replacement
+        })
+      }
+    })
+
+    // Clean aggressive punctuation
+    if (/!{2,}/.test(sanitized)) {
+      sanitized = sanitized.replace(/!{2,}/g, '!')
+      replacements.push({ original: '!!+', replacement: '!' })
+    }
+    if (/\${2,}/.test(sanitized)) {
+      sanitized = sanitized.replace(/\${2,}/g, '$')
+      replacements.push({ original: '$$+', replacement: '$' })
+    }
+
+    return {
+      sanitizedText: sanitized,
+      changesCount: replacements.length,
+      replacements
+    }
+  }
+
+  /**
+   * Predictive response model estimating Open Rate %, Reply Rate %, and CTA friction.
+   */
+  static predictEngagementMetrics (body, subjectLine, personalizationDepthPct = 90) {
+    const spam = QualityEngine.analyzeSpamScore(body, subjectLine)
+    const readability = QualityEngine.calculateReadabilityGrade(body)
+    const { wordCount } = QualityEngine.calculateReadingMetrics(body)
+
+    // Open Rate modeling: baseline 42%
+    let openRate = 42.0
+    if (subjectLine && subjectLine.includes('?')) openRate += 4.5
+    if (subjectLine && subjectLine.length >= 25 && subjectLine.length <= 55) openRate += 6.0
+    if (personalizationDepthPct >= 85) openRate += 5.0
+    if (spam.score > 15) openRate -= (spam.score - 15) * 0.8
+    openRate = Math.min(78.0, Math.max(12.0, openRate))
+
+    // Reply Rate modeling: baseline 9%
+    let replyRate = 9.0
+    if (wordCount >= 45 && wordCount <= 95) replyRate += 5.5
+    if (readability >= 5.0 && readability <= 8.0) replyRate += 3.5
+    if (personalizationDepthPct >= 90) replyRate += 4.0
+    if (spam.score > 20) replyRate -= (spam.score - 20) * 0.5
+    replyRate = Math.min(34.0, Math.max(1.8, replyRate))
+
+    // CTA Friction check
+    const lowerBody = (body || '').toLowerCase()
+    let ctaFriction = 'Low'
+    if (lowerBody.includes('schedule a 30-minute') || lowerBody.includes('fill out our form') || lowerBody.includes('sign up for a demo')) {
+      ctaFriction = 'High'
+      replyRate -= 3.0
+    } else if (lowerBody.includes('15 minutes') || lowerBody.includes('calendar')) {
+      ctaFriction = 'Moderate'
+    } else {
+      ctaFriction = 'Low'
+    }
+
+    return {
+      predictedOpenRate: Number(openRate.toFixed(1)),
+      predictedReplyRate: Number(replyRate.toFixed(1)),
+      ctaFriction
+    }
+  }
 }

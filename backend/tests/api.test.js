@@ -173,4 +173,63 @@ describe('REST API End-to-End Integration Suite', () => {
     assert.ok(metrics.repHoursSaved > 0)
     assert.ok(metrics.personalizationDepthPct > 90)
   })
+
+  it('POST /api/pitches/cadence generates 4-touch outreach sequence', async () => {
+    const res = await fetch(`${baseUrl}/pitches/cadence`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${sdrToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        accountId: 'acc-1',
+        contactId: 'con-1',
+        newsTriggerId: 'trg-1',
+        productId: 'prod-1'
+      })
+    })
+
+    assert.equal(res.status, 200)
+    const data = await res.json()
+    assert.equal(data.totalTouches, 4)
+    assert.equal(data.steps.length, 4)
+  })
+
+  it('POST /api/pitches/sanitize replaces spam jargon with clean language', async () => {
+    const res = await fetch(`${baseUrl}/pitches/sanitize`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${sdrToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        text: 'Act now for a 100% free guaranteed consultation!',
+        subjectLine: 'Urgent proposal'
+      })
+    })
+
+    assert.equal(res.status, 200)
+    const data = await res.json()
+    assert.ok(data.sanitizedText.includes('complimentary'))
+    assert.ok(data.changesCount >= 2)
+  })
+
+  it('POST /api/pitches/export returns CSV payload with proper headers', async () => {
+    const res = await fetch(`${baseUrl}/pitches/export`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${sdrToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        format: 'csv',
+        subjectLine: 'Test Subject',
+        bodyContent: 'Test Body'
+      })
+    })
+
+    assert.equal(res.status, 200)
+    const csv = await res.text()
+    assert.ok(csv.startsWith('Step,Channel,Day,Subject,Body'))
+  })
 })

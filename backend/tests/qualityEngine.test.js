@@ -42,4 +42,23 @@ describe('QualityEngine — Deliverability, Spam & Readability Metrics', () => {
 
     assert.ok(depth >= 70, `Personalization depth should be >= 70%, got ${depth}%`)
   })
+
+  it('sanitizes spam trigger phrases into consultative language', () => {
+    const input = 'Act now to get a 100% free guaranteed consultation!! Double your output now$$$'
+    const result = QualityEngine.sanitizeText(input)
+
+    assert.ok(!result.sanitizedText.includes('100% free'))
+    assert.ok(!result.sanitizedText.includes('guaranteed'))
+    assert.ok(result.sanitizedText.includes('complimentary'))
+    assert.ok(result.changesCount >= 3)
+  })
+
+  it('predicts open rate and reply rate metrics with friction scoring', () => {
+    const body = 'Hi Julian, congrats on the Series C announcement. Scaling multi-cloud architectures often introduces unexpected friction. Open to a brief 10-minute briefing next week?'
+    const metrics = QualityEngine.predictEngagementMetrics(body, "Quick question on ApexCloud's Series C", 94)
+
+    assert.ok(metrics.predictedOpenRate >= 40.0 && metrics.predictedOpenRate <= 80.0)
+    assert.ok(metrics.predictedReplyRate >= 10.0 && metrics.predictedReplyRate <= 35.0)
+    assert.equal(metrics.ctaFriction, 'Low')
+  })
 })

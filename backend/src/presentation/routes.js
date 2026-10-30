@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { PitchEngine } from '../service/pitchEngine.js'
+import { CadenceEngine } from '../service/cadenceEngine.js'
 import { NlpEngine } from '../service/nlpEngine.js'
 import { QualityEngine } from '../service/qualityEngine.js'
 import { ROLES, FRAMEWORKS, TONES } from '../config/constants.js'
@@ -218,6 +219,106 @@ export function createRouter (repository, authService) {
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
+  })
+
+  // --- Cadence & Multi-Touch Sequence Generation ---
+  router.post('/pitches/cadence', requireAuth, (req, res) => {
+    try {
+      const { accountId, contactId, newsTriggerId, productId, primaryVariant } = req.body
+
+      const account = repository.getAccountById(accountId)
+      const contact = repository.getContactById(contactId)
+      const trigger = repository.getNewsTriggerById(newsTriggerId)
+      const product = repository.getProductById(productId)
+
+      if (!account || !contact || !trigger || !product) {
+        return res.status(400).json({ error: 'Valid accountId, contactId, newsTriggerId, and productId are required' })
+      }
+
+      const cadence = CadenceEngine.generateCadence({
+        account,
+        contact,
+        trigger,
+        product,
+        primaryVariant
+      })
+
+      repository.createAuditLog({
+        userId: req.user.id,
+        userRole: req.user.role,
+        action: 'GENERATE_CADENCE',
+        entityType: 'pitches',
+        details: { accountId, steps: cadence.totalTouches }
+      })
+
+      res.json(cadence)
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  })
+
+  // --- Auto-Sanitize High-Risk Jargon ---
+  router.post('/pitches/sanitize', requireAuth, (req, res) => {
+    const { text, subjectLine } = req.body
+    if (!text) {
+      return res.status(400).json({ error: 'Text to sanitize is required' })
+    }
+
+    const result = QualityEngine.sanitizeText(text)
+    const newSpam = QualityEngine.analyzeSpamScore(result.sanitizedText, subjectLine || '')
+    const newReadability = QualityEngine.calculateReadabilityGrade(result.sanitizedText)
+
+    res.json({
+      ...result,
+      newSpamScore: newSpam.score,
+      newSpamLevel: newSpam.level,
+      newReadabilityGrade: newReadability
+    })
+  })
+
+  // --- Export Outreach Artifacts ---
+  router.post('/pitches/export', requireAuth, (req, res) => {
+    const { format, subjectLine, bodyContent, cadence, accountName, contactEmail } = req.body
+
+    if (format === 'csv') {
+      const headers = 'Step,Channel,Day,Subject,Body\n'
+      let rows = ''
+      if (cadence && cadence.steps) {
+        rows = cadence.steps.map(s =>
+          `"${s.step}","${s.channel}","${s.day}","${(s.subjectLine || '').replace(/"/g, '""')}","${(s.body || '').replace(/"/g, '""')}"`
+        ).join('\n')
+      } else {
+        rows = `"1","Email","Day 1","${(subjectLine || '').replace(/"/g, '""')}","${(bodyContent || '').replace(/"/g, '""')}"`
+      }
+      res.setHeader('Content-Type', 'text/csv')
+      res.setHeader('Content-Disposition', `attachment; filename="pitchcraft-${Date.now()}.csv"`)
+      return res.send(headers + rows)
+    }
+
+    if (format === 'eml') {
+      const emlContent = [
+        'MIME-Version: 1.0',
+        `To: ${contactEmail || 'prospect@company.com'}`,
+        `Subject: ${subjectLine || 'Partnership Inquiry'}`,
+        'Content-Type: text/plain; charset=UTF-8',
+        '',
+        bodyContent || ''
+      ].join('\r\n')
+
+      res.setHeader('Content-Type', 'message/rfc822')
+      res.setHeader('Content-Disposition', `attachment; filename="outreach-${Date.now()}.eml"`)
+      return res.send(emlContent)
+    }
+
+    // Default JSON formatted
+    res.json({
+      exportedAt: new Date().toISOString(),
+      accountName,
+      contactEmail,
+      subjectLine,
+      bodyContent,
+      cadence
+    })
   })
 
   // --- 7. Pitches CRUD & Workflow ---

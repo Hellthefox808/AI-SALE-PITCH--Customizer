@@ -158,6 +158,7 @@ export class PitchEngine {
     const readabilityGrade = QualityEngine.calculateReadabilityGrade(body)
     const { wordCount, readingTimeSec } = QualityEngine.calculateReadingMetrics(body)
     const personalizationDepthPct = QualityEngine.calculatePersonalizationDepth(body, accountName, firstName, [leadFact, secondFact])
+    const engagement = QualityEngine.predictEngagementMetrics(body, subjectLine, personalizationDepthPct)
 
     return {
       variantId,
@@ -170,7 +171,10 @@ export class PitchEngine {
       readabilityGrade,
       wordCount,
       readingTimeSec,
-      personalizationDepthPct
+      personalizationDepthPct,
+      predictedOpenRate: engagement.predictedOpenRate,
+      predictedReplyRate: engagement.predictedReplyRate,
+      ctaFriction: engagement.ctaFriction
     }
   }
 }
