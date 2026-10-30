@@ -12,3 +12,4 @@ output "health_check_url" {
   description = "Healthcheck URL for automated uptime monitors"
   value       = "http://${aws_lb.main.dns_name}/api/health"
 }
+

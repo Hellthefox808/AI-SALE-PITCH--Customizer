@@ -32,3 +32,4 @@ Thank you for your interest in contributing to PitchCraft AI! We welcome contrib
    - `test(scope): description`
    - `docs(scope): description`
    - `chore(scope): description`
+

@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { api } from './api/client.js'
-import { PitchParticleCanvas } from './components/PitchParticleCanvas.jsx'
-import { Navbar } from './components/Navbar.jsx'
-import { ExecutiveKpiBar } from './components/ExecutiveKpiBar.jsx'
-import { PitchStudio } from './components/PitchStudio.jsx'
-import { AccountExplorer } from './components/AccountExplorer.jsx'
-import { ReviewLab } from './components/ReviewLab.jsx'
-import { ProductCatalog } from './components/ProductCatalog.jsx'
-import { AuditFeed } from './components/AuditFeed.jsx'
+import {
+  PitchParticleCanvas,
+  Navbar,
+  ExecutiveKpiBar,
+  PitchStudio,
+  AccountExplorer,
+  ReviewLab,
+  ProductCatalog,
+  AuditFeed
+} from './components/index.js'
 
 export function App () {
   const [activeTab, setActiveTab] = useState('studio')

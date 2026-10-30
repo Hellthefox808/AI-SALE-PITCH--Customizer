@@ -33,3 +33,4 @@
 | **2% Budget Consumed** | 1 Hour | Warning | Automated Slack alert to on-call SRE; inspect slow queries. |
 | **5% Budget Consumed** | 6 Hours | Major | Page secondary on-call engineer; inspect external network anomalies. |
 | **10% Budget Consumed** | 24 Hours | Critical (P1) | Freeze feature deployments; route all traffic to standby replicas. |
+

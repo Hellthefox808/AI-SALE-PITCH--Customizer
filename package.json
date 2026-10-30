@@ -1,0 +1,29 @@
+{
+  "name": "ai-sales-pitch-customizer-monorepo",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Enterprise AI Sales Pitch Customizer & Multi-Touch Cadence Sequencer",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "test": "npm test --prefix backend",
+    "lint": "npm run lint --prefix backend && cd frontend && npm run lint",
+    "lint:fix": "cd backend && npx standard --fix && cd ../frontend && npx standard --fix",
+    "build": "cd frontend && npm run build",
+    "start": "npm start --prefix backend",
+    "dev:backend": "npm start --prefix backend",
+    "dev:frontend": "cd frontend && npm run dev"
+  },
+  "keywords": [
+    "sales-automation",
+    "b2b-marketing",
+    "cold-outreach",
+    "nlp",
+    "cadence-engine",
+    "4d-particles"
+  ],
+  "author": "PitchCraft AI Contributors",
+  "license": "MIT"
+}

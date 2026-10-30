@@ -29,3 +29,4 @@ The PitchCraft AI team takes software security and customer data privacy serious
 - **Least-Privilege Containerization**: Docker containers execute under unprivileged `USER node` with non-root security context and `no-new-privileges: true`.
 - **Cryptographic Storage**: User passwords are encrypted with `bcrypt` (10 rounds). JWT tokens are signed using SHA-256 HMAC with strict expiration intervals.
 - **Defensive Rate Limiting**: In-memory token-bucket limiters prevent volumetric credential stuffing and API abuse.
+

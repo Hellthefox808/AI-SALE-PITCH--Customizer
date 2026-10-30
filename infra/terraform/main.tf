@@ -210,3 +210,4 @@ resource "aws_ecs_service" "main" {
 
   depends_on = [aws_lb_listener.front_end]
 }
+

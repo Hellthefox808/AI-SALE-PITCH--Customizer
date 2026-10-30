@@ -17,3 +17,4 @@ Fixes # (issue)
 - [ ] I have followed the **Zero-Placeholder Law** (no `// TODO`, `...`, or stubbed methods).
 - [ ] I have added appropriate tests covering new functionality or regressions.
 - [ ] I have updated documentation, environment examples, or ADRs where appropriate.
+

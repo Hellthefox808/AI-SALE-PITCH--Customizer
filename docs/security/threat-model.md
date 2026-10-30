@@ -23,3 +23,4 @@ This document uses the **STRIDE** methodology (Spoofing, Tampering, Repudiation,
 2. **Non-Root Execution**: Container explicitly switches to `USER node` (UID 1000).
 3. **Immutability**: Read-only container root file system option in Kubernetes with writable emptyDir restricted to `/app/data`.
 4. **Dependency Auditing**: Automated CI/CD dependency vulnerability checks on all pull requests.
+

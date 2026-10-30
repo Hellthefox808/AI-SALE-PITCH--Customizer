@@ -35,3 +35,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 4D-inspired time-evolving canvas telemetry system ($w(t) = \sin(t \cdot \omega)$).
 - Role-based access control with live persona switching (`sdr_rep`, `sales_manager`, `admin`).
 - Dark glassmorphism UI inspired by Apple human interface guidelines.
+
